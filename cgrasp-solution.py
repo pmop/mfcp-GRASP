@@ -1,9 +1,10 @@
 from random import randint
 from math import sqrt
 import pygame
-from collections import defaultdict
 
-
+"""
+TODO: THIS IS A COPY'N'PASTE FROM GRASP
+"""
 def cartesian_distance_point_to_point(A, B):
     x, y = A[0], A[1]
     sx, sy = B[0], B[1]
@@ -53,51 +54,31 @@ def greedy_random_solution(demand_points, radius):
     sol = []
     uncovered_demand = [i for i in demand_points]
     while len(uncovered_demand) > 0:
+        sol_candidates = []
         leftmost_demand = uncovered_demand[0][0] + radius
         heightmost = heightmost_demand(uncovered_demand) + radius
+        step_solution_covered_points = []
         p = len(uncovered_demand) # generate at most p facilities
-
         sol_ = generate_random_points(leftmost_demand, heightmost, p)
-        # maybe move it up and do restricted selection separated (globaly)?
-        sol_dpoint_facility = dict()
-        for k in range(p):
-            sol_dpoint_facility[k] = []
-
         for facility in sol_:
-            # indexes of points covered of uncovered_demand
+            # points_covered is a list of indexes of uncovered_demand that are now covered
             points_covered = points_facility_covers(uncovered_demand, facility, radius)
-            w = len(points_covered)
-            if  w > 0:
-                for p in points_covered:
-                    sol_dpoint_facility[p].append([w, facility])
-                remain_uncovered = []
-                for z in range(len(uncovered_demand)):
-                    if z in points_covered:
-                        points_covered.remove(z)
+            if len(points_covered) > 0:
+                sol_candidates.append(facility)
+                # remove covered points from uncovered demand
+                uncovered = []
+                for index in range(len(uncovered_demand)):
+                    if index in points_covered:
+                        points_covered.remove(index)
                     else:
-                        remain_uncovered.append(uncovered_demand[z])
-                uncovered_demand = remain_uncovered
-        sol_ = make_rcl(1.0, sol_dpoint_facility)
-        sol = sol + sol_
+                        uncovered.append(uncovered_demand[index])
+                uncovered_demand = uncovered
+
+
+
+        sol = sol + sol_candidates
+
     return sol
-
-
-# make restricted candidate list
-# dpoint_tofacility is a dict ([[weight, facility]]
-def make_rcl(alpha, dpoint_tofacility):
-    rcl = []
-    for k, v in dpoint_tofacility.items():
-        # demand is covered by more than two facilities
-        if len(v) > 1:
-            best_weight = v[0][0]
-            best_facility = v[0][1]
-            for weight_facility in v:
-                if weight_facility[0] >= best_weight * alpha:
-                    best_weight, best_facility = weight_facility[0], weight_facility[1]
-            rcl.append(best_facility)
-        elif len(v) == 1:
-            rcl.append(v[0][1])
-    return rcl
 
 
 def grasp(demand_points, radius, max_iter):
@@ -116,7 +97,9 @@ def grasp(demand_points, radius, max_iter):
     return best
 
 
-def totally_random_solution(width, height, demand_points, radius):
+
+
+def solution(width, height, demand_points, radius):
     p = len(demand_points)
     solution_found = False
     sol = None
@@ -150,7 +133,7 @@ def show_sol(dpoints, floc, fradius):
 def simul():
     radius = 30
     demand_points = generate_random_points(620, 460, 50)
-    print("Waiting for solution. (PURE-GRASP)")
+    print("Waiting for solution.")
     sol = grasp(demand_points, radius, 50)
     show_sol(demand_points, sol, radius)
 
