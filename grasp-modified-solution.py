@@ -152,7 +152,6 @@ def simul():
     demand_points = generate_random_points(620, 460, 50)
     print("Waiting for solution.(GRASP-MODIFIED)")
     sol = grasp(demand_points, radius, 50)
-    sol = brute_force_improving(demand_points, sol, radius)
     w = len(sol)
     print(f"After improving: {w}")
     show_sol(demand_points, sol, radius)
