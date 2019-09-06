@@ -83,17 +83,17 @@ def vec_scalar_sum(vec, s):
 
 
 def greedy_random_solution(demand_points, radius, p):
-    global GRUN
-    global GSOL
-    global GBOUNDS
+    # global GRUN
+    # global GSOL
+    # global GBOUNDS
 
     sol = []
     uncovered_demand = [i for i in demand_points]
-    while GRUN and len(uncovered_demand) > 0:
+    # while GRUN and len(uncovered_demand) > 0:
+    while len(uncovered_demand) > 0:
         sol_candidates = []
         lower, upper = get_bounds(uncovered_demand)
 
-        step_solution_covered_points = []
         sol_ = generate_random_points(lower, upper, p)
         for facility in sol_:
             # points_covered is a list of indexes of uncovered_demand that are now covered
@@ -111,32 +111,33 @@ def greedy_random_solution(demand_points, radius, p):
 
         sol = sol + sol_candidates
         p = len(uncovered_demand)  # generate at most p facilities
-        mlock.acquire()
-        GSOL = deepcopy(sol)
-        GBOUNDS = deepcopy([lower, upper])
-        mlock.release()
-        time.sleep(1)
+        # mlock.acquire()
+        # GSOL = deepcopy(sol)
+        # GBOUNDS = deepcopy([lower, upper])
+        # mlock.release()
+        # time.sleep(0.1)
 
     return sol
 
 
 def grasp(demand_points, radius, max_iter):
-    global GRUN
+    # global GRUN
+    dt = pygame.time.get_ticks()
     best = greedy_random_solution(demand_points, radius, len(demand_points))
     best_l = len(best)
     solutions_costs = [best_l]
     for _ in range(max_iter - 1):
-        if GRUN is False:
-            break
+        # if GRUN is False:
+        #     break
         sol = greedy_random_solution(demand_points, radius, best_l)
         j = len(sol)
         solutions_costs.append(j)
         if j < best_l:
             best_l = j
             best = sol
-    print(solutions_costs)
-    print(f"\n Best is: {best_l}")
-    return best
+    # print(solutions_costs)
+    # print(f"\n Best is: {best_l}")
+    return best, pygame.time.get_ticks() - dt
 
 
 def solution(width, height, demand_points, radius):
@@ -198,28 +199,8 @@ def show_sol(dpoints, fradius):
     pygame.quit()
 
 
-"""
-Melhoria final: faça um dicionario: pra cada ponto de demanda, as torres que o atendem. Se o ponto de demanda é coberto
-por mais de uma torre, existem vizinhos que são cobertos por mais de uma torre. Apenas uma torre e necessária para
-cobrir esse ponto e seus vizinhos
-
-"""
-
-
-def brute_force_improving(demand_points, facilities_points, radius):
-    removee = []
-    for k in range(len(facilities_points)):
-        better_set = [facility for facility in facilities_points]
-        better_set.pop(k)
-        if solution_fully_covers(demand_points, better_set, radius):
-            removee.append(k)
-    better_set = []
-    for k in range(len(facilities_points)):
-        if (k in removee):
-            removee.remove(k)
-        else:
-            better_set.append(facilities_points[k])
-    return better_set
+def profiling():
+    pass
 
 
 def simul():
@@ -227,18 +208,29 @@ def simul():
     global GRUN
 
     radius = 30
-    demand_points = generate_random_points([0, 0], [790, 590], 500)
-    GBOUNDS = [[0, 0], [620, 460]]
+    test_npoints = [100, 250, 500, 750, 1000]
+    test_density = [.1, .05, .01]
+    print(f"Radius: {radius}. Run iters: 50")
+    print("Density\tPoints\tDimension\tDiscs\tRun time (ms)")
+    for i in test_density:
+        print(f"{i}", end='\t')
+        for j in test_npoints:
+            # Dimension
+            m = sqrt(j / i)
+            demand_points = generate_random_points([0, 0], [m, m], j)
+            print(f"{j}\t{m}", end="\t")
+            ndiscs, dt = grasp(demand_points, 30, 50)
+            print(f"{ndiscs}\t{dt}", end="\t")
+
+    # GBOUNDS = [[0, 0], [620, 460]]
     # print("Waiting for solution.(GRASP-MODIFIED)")
     # sol = grasp(demand_points, radius, 50)
-    solver_proc = threading.Thread(target=grasp, args=[demand_points, radius, 50])
-    solver_proc.start()
-    show_proc = threading.Thread(target=show_sol, args=[demand_points, radius])
-    show_proc.start()
-    show_proc.join()
+    # show_proc = threading.Thread(target=show_sol, args=[demand_points, radius])
+    # show_proc.start()
+    # show_proc.join()
     # show_sol(demand_points, radius)
-    if solver_proc.is_alive():
-        GRUN = False
+    # if solver_proc.is_alive():
+    #     GRUN = False
     # w = len(sol)
     # print(f"After improving: {w}")
 
